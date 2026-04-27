@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<!-- saved from url=(0109)file:///C:/Users/user/Downloads/%D0%9A%D0%BE%D0%BB%D0%BB%D0%B0%D0%B1%D0%BE%D1%80%D0%B0%D1%86%D0%B8%D1%8F.html -->
+<html lang="ru"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Коллаборация — платформа для нетворкинга и мероприятий</title>
+  <style>
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+    :root {
+      --white: #FFFFFF; --beige: #F5F5DC; --green: #4CAF50; --orange: #FF9800;
+      --dark: #333; --shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    body {
+      background: var(--beige); display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; padding: 20px;
+    }
+    .app {
+      width: 100%; max-width: 450px; height: 90vh; background: var(--white);
+      border-radius: 24px; box-shadow: var(--shadow); overflow: hidden;
+      display: flex; flex-direction: column; position: relative;
+    }
+    .header {
+      padding: 16px 20px; display: flex; justify-content: space-between;
+      align-items: center; border-bottom: 1px solid #e0e0e0; z-index: 10;
+      background: var(--white);
+    }
+    .logo {
+      font-size: 1.4rem; font-weight: 700; color: var(--green); cursor: pointer;
+    }
+    .menu-icon { font-size: 1.8rem; cursor: pointer; }
+    .main-content {
+      flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column;
+    }
+    .page { display: none; flex-direction: column; flex: 1; }
+    .page.active { display: flex; }
+    input, select, textarea {
+      width: 100%; padding: 12px; margin: 8px 0;
+      border: 1px solid #ddd; border-radius: 12px; font-size: 1rem;
+    }
+    button {
+      padding: 14px; border: none; border-radius: 14px; font-size: 1rem;
+      font-weight: 600; cursor: pointer; background: var(--orange); color: white;
+      text-transform: uppercase; letter-spacing: 0.5px; margin: 8px 0;
+    }
+    button.green { background: var(--green); }
+    .card {
+      background: var(--beige); border-radius: 18px; padding: 16px;
+      margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      cursor: pointer; transition: transform 0.1s;
+    }
+    .card:hover { transform: scale(1.02); }
+    .card-title { font-size: 1.2rem; font-weight: 700; color: var(--green); margin-bottom: 6px; }
+    .card-detail { font-size: 0.9rem; margin-bottom: 4px; }
+    .city-selector {
+      margin-bottom: 16px;
+    }
+    .city-selector select {
+      width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ddd;
+      font-size: 1rem; background: white;
+    }
+    .match-card {
+      background: white; border-radius: 24px; padding: 24px;
+      box-shadow: var(--shadow); display: flex; flex-direction: column;
+      align-items: center; gap: 12px; margin: 16px 0;
+    }
+    .match-photo {
+      width: 150px; height: 150px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--green), var(--orange));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem; color: white; margin-bottom: 8px;
+    }
+    .match-actions { display: flex; gap: 30px; margin-top: 16px; }
+    .action-btn {
+      width: 60px; height: 60px; border-radius: 50%; border: none;
+      font-size: 2rem; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .btn-dislike { background: #ffcdd2; color: #d32f2f; }
+    .btn-like { background: #c8e6c9; color: #2e7d32; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+    .tag { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .tag-green { background: #e8f5e9; color: var(--green); }
+    .tag-orange { background: #fff3e0; color: var(--orange); }
+    .side-menu {
+      position: absolute; top: 0; right: -100%; width: 80%; height: 100%;
+      background: white; box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+      z-index: 20; transition: right 0.3s; display: flex; flex-direction: column;
+      padding: 24px 16px;
+    }
+    .side-menu.active { right: 0; }
+    .menu-item {
+      padding: 16px; font-size: 1.1rem; display: flex; align-items: center;
+      gap: 12px; border-radius: 12px; cursor: pointer;
+    }
+    .menu-item:hover { background: var(--beige); }
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.3); z-index: 15; display: none;
+    }
+    .overlay.active { display: block; }
+    .calendar-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 16px;
+    }
+    .cal-day {
+      padding: 10px; text-align: center; border-radius: 8px; background: var(--beige);
+    }
+    .cal-day.event { background: var(--green); color: white; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <span class="logo" onclick="navigate(&#39;main&#39;)">Коллаборация</span>
+    <span class="menu-icon" onclick="toggleMenu()">☰</span>
+  </div>
+  <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+  <div class="side-menu" id="sideMenu"><div class="menu-item" onclick="navigate(&#39;main&#39;)">🏠 Главный экран</div><div class="menu-item" onclick="navigate(&#39;match-people&#39;)">🧑‍🤝‍🧑 Метч (люди)</div><div class="menu-item" onclick="navigate(&#39;match-events&#39;)">🎪 Метч (мероприятия)</div><div class="menu-item" onclick="navigate(&#39;calendar&#39;)">📅 Календарь</div><div class="menu-item" onclick="navigate(&#39;chats&#39;)">💬 Мои чаты</div><div class="menu-item" onclick="navigate(&#39;create-event&#39;)">✍️ Создать мероприятие</div><div class="menu-item" onclick="navigate(&#39;profile&#39;)">👤 Профиль</div><div class="menu-item" onclick="navigate(&#39;logout&#39;)">🚪 Выйти</div></div>
+  <div class="main-content" id="mainContent"><div class="page active">
+      <h3 style="color:var(--green); text-align:center;">Вход в Коллаборацию</h3>
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPass" placeholder="Пароль">
+      <button onclick="login()">Войти</button>
+      <div style="display:flex; gap:8px;">
+        <button class="green" style="flex:1;" onclick="alert(&#39;Вход через ВК (демо)&#39;)">ВК</button>
+        <button class="green" style="flex:1;" onclick="alert(&#39;Вход через Leader ID (демо)&#39;)">Leader ID</button>
+      </div>
+      <p style="text-align:center; cursor:pointer; color:var(--green);" onclick="navigate(&#39;register&#39;)">
+        Зарегистрироваться
+      </p>
+    </div></div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'collab_data_v3';
+  const CITIES = ['Москва','Санкт-Петербург','Казань','Новосибирск','Екатеринбург',
+    'Нижний Новгород','Краснодар','Сочи','Ростов-на-Дону','Самара','Уфа','Владивосток'];
+
+  let data = {
+    users: [],
+    currentUser: null,
+    events: [],
+    people: [],
+    likes: {},
+    eventRegs: {},
+    chats: [],
+    // Глобальный выбранный город (не зависит от пользователя, по умолчанию Москва)
+    selectedCity: 'Москва'
+  };
+
+  // Инициализация тестовых данных (без привязки ко входу)
+  function initDemoData() {
+    if (!localStorage.getItem(STORAGE_KEY)) {
+      // Несколько базовых пользователей для входа (без привязки к городам)
+      data.users = [
+        { email: 'admin@collab.ru', password: 'admin', name: 'Администратор', role: 'admin',
+          city: 'Москва', region: 'Московская область' },
+        { email: 'user@collab.ru', password: '1', name: 'Тестовый Пользователь', role: 'user',
+          city: 'Москва', region: 'Московская область' }
+      ];
+
+      // Анкеты людей (во всех городах)
+      data.people = [
+        { id: 'p1', name: 'Анна Иванова', work: 'МГУ, маркетинг', skills: ['SMM','Аналитика'],
+          interests: ['Стартапы','Дизайн'], city: 'Москва', photo: '👩' },
+        { id: 'p2', name: 'Петр Сидоров', work: 'Яндекс, разработчик', skills: ['Python','ML'],
+          interests: ['Наука','Музыка'], city: 'Москва', photo: '👨' },
+        { id: 'p3', name: 'Елена Смирнова', work: 'ВШЭ, менеджмент', skills: ['Agile','Управление'],
+          interests: ['Образование','Экология'], city: 'Москва', photo: '👩‍💼' },
+        { id: 'spb1', name: 'Дмитрий Смирнов', work: 'СПбГУ, дизайн', skills: ['Дизайн','UX'],
+          interests: ['Искусство','IT'], city: 'Санкт-Петербург', photo: '👨‍🎨' },
+        { id: 'spb2', name: 'Ольга Федорова', work: 'Лента, HR', skills: ['HR','Коучинг'],
+          interests: ['Психология','Спорт'], city: 'Санкт-Петербург', photo: '👩' },
+        { id: 'kaz1', name: 'Резеда Ахметова', work: 'КФУ, PM', skills: ['Agile','Scrum'],
+          interests: ['Стартапы','Образование'], city: 'Казань', photo: '👩‍💼' },
+        { id: 'kaz2', name: 'Айдар Шакиров', work: 'IT-парк, разработчик', skills: ['Java','Spring'],
+          interests: ['IT','Хоккей'], city: 'Казань', photo: '👨' },
+        { id: 'nsk1', name: 'Алексей Тихонов', work: 'Академпарк, Data Science',
+          skills: ['Python','ML','SQL'], interests: ['Наука','ИИ'], city: 'Новосибирск', photo: '👨‍💻' },
+        { id: 'nsk2', name: 'Светлана Ким', work: 'НГУ, физика', skills: ['MATLAB','Моделирование'],
+          interests: ['Физика','Образование'], city: 'Новосибирск', photo: '👩‍🔬' },
+        { id: 'ekb1', name: 'Мария Попова', work: 'УрФУ, маркетинг', skills: ['SMM','Контент'],
+          interests: ['Бизнес','Медиа'], city: 'Екатеринбург', photo: '👩‍💼' },
+        { id: 'ekb2', name: 'Павел Громов', work: 'СКБ Контур, разработка', skills: ['C#','.NET'],
+          interests: ['Айти','Музыка'], city: 'Екатеринбург', photo: '👨' },
+        { id: 'nn1', name: 'Сергей Волков', work: 'IT-парк, веб-разработка',
+          skills: ['JavaScript','React'], interests: ['Стартапы','Хакатоны'], city: 'Нижний Новгород', photo: '👨‍💻' },
+        { id: 'nn2', name: 'Анастасия Сорокина', work: 'НГЛУ, переводчик', skills: ['Английский','Китайский'],
+          interests: ['Языки','Культура'], city: 'Нижний Новгород', photo: '👩' },
+        { id: 'krd1', name: 'Ольга Соколова', work: 'КубГУ, дизайн', skills: ['Figma','Photoshop'],
+          interests: ['Искусство','Мода'], city: 'Краснодар', photo: '👩‍🎨' },
+        { id: 'krd2', name: 'Роман Зайцев', work: 'Агрохолдинг, логистика', skills: ['Управление цепями','Excel'],
+          interests: ['Агротех','Спорт'], city: 'Краснодар', photo: '👨' },
+        { id: 'sochi1', name: 'Иван Демидов', work: 'Hyatt, управление', skills: ['CRM','Управление персоналом'],
+          interests: ['Туризм','Гостиничный бизнес'], city: 'Сочи', photo: '👨‍💼' },
+        { id: 'sochi2', name: 'Анжелика Мороз', work: 'Роза Хутор, ивенты', skills: ['Event','Партнерства'],
+          interests: ['Мероприятия','Спорт'], city: 'Сочи', photo: '👩' },
+        { id: 'rost1', name: 'Наталья Кириенко', work: 'ДГТУ, PR', skills: ['PR','Event-менеджмент'],
+          interests: ['Медиа','Нетворкинг'], city: 'Ростов-на-Дону', photo: '👩‍💼' },
+        { id: 'rost2', name: 'Владимир Ковалев', work: 'Ростелеком, ИТ', skills: ['Cisco','Network'],
+          interests: ['Технологии','Футбол'], city: 'Ростов-на-Дону', photo: '👨' },
+        { id: 'sam1', name: 'Артём Козлов', work: 'Самарский университет', skills: ['Мехатроника','Python'],
+          interests: ['Робототехника','Космос'], city: 'Самара', photo: '👨‍🔬' },
+        { id: 'sam2', name: 'Екатерина Лукина', work: 'Сбер, аналитика', skills: ['SQL','Tableau'],
+          interests: ['Финтех','Танцы'], city: 'Самара', photo: '👩' },
+        { id: 'ufa1', name: 'Лилия Галимова', work: 'БашГУ, экономика', skills: ['Финансы','Excel'],
+          interests: ['Экономика','Образование'], city: 'Уфа', photo: '👩‍🏫' },
+        { id: 'ufa2', name: 'Тимур Хасанов', work: 'УГНТУ, нефтехимия', skills: ['Химия','Аналитика'],
+          interests: ['Наука','Экология'], city: 'Уфа', photo: '👨‍🔬' },
+        { id: 'vld1', name: 'Максим Егоров', work: 'ДВФУ, Java', skills: ['Java','Kotlin'],
+          interests: ['Программирование','Море'], city: 'Владивосток', photo: '👨‍💻' },
+        { id: 'vld2', name: 'Яна Цой', work: 'FESCO, логистика', skills: ['Логистика','1С'],
+          interests: ['Перевозки','Азия'], city: 'Владивосток', photo: '👩' }
+      ];
+
+      // Мероприятия (реальные, по городам)
+      data.events = [
+        { id: 'e1', title: 'Лекторий: точка сборки (Яндекс)', date: '2026-07-26', time: '18:00',
+          city: 'Москва', place: 'Клуб Bounce', desc: 'Лекции, код-баттл и нетворкинг', status: 'active' },
+        { id: 'e2', title: 'Фестиваль-конструктор нетворкинга', date: '2026-07-15', time: '12:00',
+          city: 'Москва', place: 'Дом Винтажной музыки', desc: '4 формата нетворкинга за 1 день', status: 'active' },
+        { id: 'e3', title: 'Конференция «Ты – Солнце. Свети!»', date: '2026-06-20', time: '10:00',
+          city: 'Москва', place: 'Центр событий', desc: 'Экологичная проявленность', status: 'active' },
+        { id: 'e4', title: 'Хакатон «Цифровой прорыв» (финал)', date: '2026-04-12', time: '09:00',
+          city: 'Москва', place: 'Москва', desc: 'Финал ИТ-соревнований', status: 'active' },
+        { id: 'e5', title: 'Мой Бизнес Forum 2026', date: '2026-09-09', time: '10:00',
+          city: 'Санкт-Петербург', place: 'Экспофорум', desc: 'Главное деловое событие для МСП', status: 'active' },
+        { id: 'e6', title: 'XVI Российский M&A конгресс: Белые ночи', date: '2026-06-23', time: '09:00',
+          city: 'Санкт-Петербург', place: 'Отель Астория', desc: 'Сделки, инвестиции', status: 'active' },
+        { id: 'e7', title: 'Дни ритейла на Неве', date: '2026-04-28', time: '10:00',
+          city: 'Санкт-Петербург', place: 'Экспофорум', desc: 'Форум бизнеса и власти по ритейлу', status: 'active' },
+        { id: 'e8', title: 'Business & Design Dialogue SPb 2026', date: '2026-10-15', time: '09:00',
+          city: 'Санкт-Петербург', place: 'Дизайн-пространство', desc: 'Офисные пространства', status: 'active' },
+        { id: 'e9', title: 'XX Российский венчурный форум', date: '2026-04-09', time: '10:00',
+          city: 'Казань', place: 'Казань Экспо', desc: 'Технологическое лидерство', status: 'active' },
+        { id: 'e10', title: 'Kazan Digital Week', date: '2026-09-20', time: '09:00',
+          city: 'Казань', place: 'Казанская ярмарка', desc: 'Цифровые технологии и стартапы', status: 'active' },
+        { id: 'e11', title: 'Всемирный фестиваль кооперативной молодёжи', date: '2026-05-14', time: '10:00',
+          city: 'Казань', place: 'Казань', desc: 'Конкурс стартапов', status: 'active' },
+        { id: 'e12', title: 'XIII Международный форум «ТЕХНОПРОМ-2026»', date: '2026-08-26', time: '10:00',
+          city: 'Новосибирск', place: 'МВК «Новосибирск Экспоцентр»', desc: 'Наука и технологии', status: 'active' },
+        { id: 'e13', title: 'XX Сибирская венчурная ярмарка', date: '2026-08-27', time: '09:00',
+          city: 'Новосибирск', place: 'Новосибирск', desc: 'Инвестиции в инновации', status: 'active' },
+        { id: 'e14', title: 'Код ИБ | Новосибирск 2026', date: '2026-11-10', time: '10:00',
+          city: 'Новосибирск', place: 'Новосибирск', desc: 'Конференция по ИБ', status: 'active' },
+        { id: 'e15', title: 'ИННОПРОМ-2026', date: '2026-07-06', time: '10:00',
+          city: 'Екатеринбург', place: 'Екатеринбург ЭКСПО', desc: 'Главная промышленная выставка', status: 'active' },
+        { id: 'e16', title: 'IV Всероссийский форум «Финмаркет-2026»', date: '2026-05-12', time: '10:00',
+          city: 'Екатеринбург', place: 'ККТ «Космос»', desc: 'Финансы и инвестиции', status: 'active' },
+        { id: 'e17', title: 'НРФ Регионы (рекламный форум)', date: '2026-09-18', time: '10:00',
+          city: 'Екатеринбург', place: 'Екатеринбург', desc: 'Продвижение и бренды', status: 'active' },
+        { id: 'e18', title: 'Инвестиционный форум ВТБ «РОССИЯ ЗОВЕТ!»', date: '2026-04-29', time: '10:00',
+          city: 'Нижний Новгород', place: 'Нижний Новгород', desc: 'Диалог бизнеса и государства', status: 'active' },
+        { id: 'e19', title: 'VI Форум «Сильные идеи для нового времени»', date: '2026-07-22', time: '10:00',
+          city: 'Нижний Новгород', place: 'Нижний Новгород', desc: 'Поддержка инициатив', status: 'active' },
+        { id: 'e20', title: 'Тех-Френдли Викенд', date: '2026-05-21', time: '12:00',
+          city: 'Нижний Новгород', place: 'Нижегородская ярмарка', desc: 'Технофестиваль', status: 'active' },
+        { id: 'e21', title: 'Бизнес-форум «Логистика Юга России»', date: '2026-09-25', time: '09:00',
+          city: 'Краснодар', place: 'Отель «Red Point»', desc: 'Логистика юга', status: 'active' },
+        { id: 'e22', title: 'Форум-выставка «Регион инноваций Юг»', date: '2026-12-10', time: '10:00',
+          city: 'Краснодар', place: 'Экспоград Юг', desc: 'Промышленность и технологии', status: 'active' },
+        { id: 'e23', title: 'Конференция РБК «Предпринимательский класс»', date: '2026-04-16', time: '10:00',
+          city: 'Краснодар', place: 'Galich hall', desc: 'HoReCa и гостеприимство', status: 'active' },
+        { id: 'e24', title: 'Форум недвижимости «Движение»', date: '2026-06-16', time: '09:00',
+          city: 'Сочи', place: 'Роза Хутор', desc: 'Коммерческая недвижимость', status: 'active' },
+        { id: 'e25', title: 'Всероссийский зерновой форум', date: '2026-05-20', time: '10:00',
+          city: 'Сочи', place: 'Mantera Resort', desc: 'Зерновой рынок', status: 'active' },
+        { id: 'e26', title: 'Международный туристский форум SIFT-2026', date: '2026-12-08', time: '10:00',
+          city: 'Сочи', place: 'Сочи', desc: 'Внутренний и въездной туризм', status: 'active' },
+        { id: 'e27', title: 'DonDevConf + Fest 2026', date: '2026-05-23', time: '10:00',
+          city: 'Ростов-на-Дону', place: 'Ростов-на-Дону', desc: 'Конференция про код', status: 'active' },
+        { id: 'e28', title: 'Хакатон Весна 2026 / Южный ИТ-форум', date: '2026-03-20', time: '09:00',
+          city: 'Ростов-на-Дону', place: 'ДГТУ', desc: 'ИТ-соревнования', status: 'active' },
+        { id: 'e29', title: 'Форум «Кадры для цифровой экономики»', date: '2026-03-26', time: '10:00',
+          city: 'Самара', place: 'ПГУТИ', desc: 'Лидеры ИКТ', status: 'active' },
+        { id: 'e30', title: 'International IT Business Days 2026', date: '2026-03-12', time: '09:00',
+          city: 'Самара', place: 'Самара', desc: 'Экспорт цифровых продуктов', status: 'active' },
+        { id: 'e31', title: 'Форум «Люди. Бизнес. Деньги»', date: '2026-11-26', time: '10:00',
+          city: 'Уфа', place: 'Геномный центр', desc: 'Налоги, инвесторы', status: 'active' },
+        { id: 'e32', title: 'Форум малого бизнеса стран ШОС и БРИКС', date: '2026-09-15', time: '10:00',
+          city: 'Уфа', place: 'Уфа', desc: 'Международное предпринимательство', status: 'active' },
+        { id: 'e33', title: 'Восточный экономический форум (ВЭФ-2026)', date: '2026-09-01', time: '10:00',
+          city: 'Владивосток', place: 'ДВФУ', desc: 'Технологии Дальнего Востока', status: 'active' },
+        { id: 'e34', title: 'Восточный цифровой форум', date: '2026-10-02', time: '09:00',
+          city: 'Владивосток', place: 'Владивосток', desc: 'Цифровизация', status: 'active' }
+      ];
+
+      data.likes = {};
+      data.eventRegs = {};
+      data.chats = [];
+      data.selectedCity = 'Москва';
+      saveData();
+    } else {
+      data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    }
+  }
+
+  function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+  function getCurrentUser() {
+    return data.users.find(u => u.email === data.currentUser);
+  }
+
+  // ----- НАВИГАЦИЯ -----
+  let currentPage = 'login';
+  function navigate(page) {
+    currentPage = page;
+    renderMenu();
+    renderPage();
+    closeMenu();
+  }
+
+  function renderMenu() {
+    const menu = document.getElementById('sideMenu');
+    const user = getCurrentUser();
+    let items = [
+      { label: '🏠 Главный экран', page: 'main' },
+      { label: '🧑‍🤝‍🧑 Метч (люди)', page: 'match-people' },
+      { label: '🎪 Метч (мероприятия)', page: 'match-events' },
+      { label: '📅 Календарь', page: 'calendar' },
+      { label: '💬 Мои чаты', page: 'chats' },
+      { label: '✍️ Создать мероприятие', page: 'create-event' },
+      { label: '👤 Профиль', page: 'profile' },
+    ];
+    if (user && user.role === 'admin') {
+      items.push({ label: '🛡️ Модерация', page: 'moderation' });
+    }
+    items.push({ label: '🚪 Выйти', page: 'logout' });
+    menu.innerHTML = items.map(i =>
+      `<div class="menu-item" onclick="navigate('${i.page}')">${i.label}</div>`
+    ).join('');
+  }
+
+  function renderPage() {
+    const container = document.getElementById('mainContent');
+    container.innerHTML = '';
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'page active';
+    if (currentPage === 'login') renderLogin(pageDiv);
+    else if (currentPage === 'register') renderRegister(pageDiv);
+    else if (currentPage === 'main') renderMain(pageDiv);
+    else if (currentPage === 'match-people') renderMatchPeople(pageDiv);
+    else if (currentPage === 'match-events') renderMatchEvents(pageDiv);
+    else if (currentPage === 'calendar') renderCalendar(pageDiv);
+    else if (currentPage === 'chats') renderChats(pageDiv);
+    else if (currentPage === 'create-event') renderCreateEvent(pageDiv);
+    else if (currentPage === 'profile') renderProfile(pageDiv);
+    else if (currentPage === 'moderation') renderModeration(pageDiv);
+    else if (currentPage === 'logout') {
+      data.currentUser = null;
+      saveData();
+      navigate('login');
+      return;
+    }
+    container.appendChild(pageDiv);
+  }
+
+  function closeMenu() {
+    document.getElementById('sideMenu').classList.remove('active');
+    document.getElementById('overlay').classList.remove('active');
+  }
+  function toggleMenu() {
+    document.getElementById('sideMenu').classList.toggle('active');
+    document.getElementById('overlay').classList.toggle('active');
+  }
+
+  // Городской селектор (повторно используемый)
+  function citySelectorHTML(selectedCity) {
+    const options = CITIES.map(c => `<option value="${c}" ${c===selectedCity?'selected':''}>${c}</option>`).join('');
+    return `<div class="city-selector">
+      <select onchange="changeCity(this.value)">
+        ${options}
+      </select>
+    </div>`;
+  }
+
+  // Глобальная смена города
+  window.changeCity = function(newCity) {
+    data.selectedCity = newCity;
+    saveData();
+    // Перерисовать текущую страницу, чтобы обновился контент
+    navigate(currentPage);
+  };
+
+  // ----- СТРАНИЦЫ -----
+  function renderLogin(container) {
+    container.innerHTML = `
+      <h3 style="color:var(--green); text-align:center;">Вход в Коллаборацию</h3>
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPass" placeholder="Пароль">
+      <button onclick="login()">Войти</button>
+      <div style="display:flex; gap:8px;">
+        <button class="green" style="flex:1;" onclick="alert('Вход через ВК (демо)')">ВК</button>
+        <button class="green" style="flex:1;" onclick="alert('Вход через Leader ID (демо)')">Leader ID</button>
+      </div>
+      <p style="text-align:center; cursor:pointer; color:var(--green);" onclick="navigate('register')">
+        Зарегистрироваться
+      </p>
+    `;
+  }
+
+  function login() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    const user = data.users.find(u => u.email === email && u.password === pass);
+    if (user) {
+      data.currentUser = email;
+      // При входе город для фильтра берём из профиля пользователя (если есть), иначе Москва
+      data.selectedCity = user.city || 'Москва';
+      saveData();
+      navigate('main');
+    } else {
+      alert('Неверный логин или пароль');
+    }
+  }
+
+  function renderRegister(container) {
+    container.innerHTML = `
+      <h3 style="color:var(--green);">Регистрация</h3>
+      <input id="regName" placeholder="ФИО">
+      <input id="regBdate" type="date">
+      <select id="regCity">
+        <option value="">Выберите город</option>
+        ${CITIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+      </select>
+      <input id="regRegion" placeholder="Область">
+      <input id="regWork" placeholder="Место учёбы/работы">
+      <input id="regSkills" placeholder="Навыки (через запятую)">
+      <input id="regInterests" placeholder="Интересы (через запятую)">
+      <input id="regPhoto" placeholder="Ссылка на фото (или эмодзи)">
+      <input id="regEmail" type="email" placeholder="Email">
+      <input id="regPass" type="password" placeholder="Пароль">
+      <label><input type="checkbox" id="regConsent"> Согласие на обработку ПД</label>
+      <button onclick="register()">Зарегистрироваться</button>
+    `;
+  }
+
+  function register() {
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const pass = document.getElementById('regPass').value;
+    const consent = document.getElementById('regConsent').checked;
+    if (!name || !email || !pass || !consent) {
+      alert('Заполните все поля и дайте согласие'); return;
+    }
+    if (data.users.find(u => u.email === email)) {
+      alert('Пользователь с таким email уже существует'); return;
+    }
+    const newUser = {
+      email, password: pass, name,
+      bdate: document.getElementById('regBdate').value,
+      city: document.getElementById('regCity').value,
+      region: document.getElementById('regRegion').value.trim(),
+      work: document.getElementById('regWork').value.trim(),
+      skills: document.getElementById('regSkills').value.split(',').map(s=>s.trim()).filter(Boolean),
+      interests: document.getElementById('regInterests').value.split(',').map(s=>s.trim()).filter(Boolean),
+      photo: document.getElementById('regPhoto').value.trim() || '👤',
+      role: 'user'
+    };
+    data.users.push(newUser);
+    data.currentUser = email;
+    data.selectedCity = newUser.city || 'Москва';
+    saveData();
+    alert('Регистрация успешна!');
+    navigate('main');
+  }
+
+  function renderMain(container) {
+    const activeEvents = data.events.filter(e => e.status === 'active' && e.city === data.selectedCity);
+    container.innerHTML = `
+      <h3 style="color:var(--green);">Мероприятия</h3>
+      ${citySelectorHTML(data.selectedCity)}
+      ${activeEvents.map(e => `
+        <div class="card" onclick="alert('${e.title}\\n${e.date} ${e.time}\\n${e.place}\\n${e.desc}')">
+          <div class="card-title">${e.title}</div>
+          <div class="card-detail">📅 ${e.date} · ⏰ ${e.time}</div>
+          <div class="card-detail">📍 ${e.place}</div>
+          <div class="card-detail" style="color:#666;">${e.desc}</div>
+        </div>
+      `).join('') || '<p>Нет мероприятий в выбранном городе.</p>'}
+    `;
+  }
+
+  function renderMatchPeople(container) {
+    const peopleInCity = data.people.filter(p => p.city === data.selectedCity);
+    if (peopleInCity.length === 0) {
+      container.innerHTML = `<h3 style="color:var(--green);">Найди команду</h3>${citySelectorHTML(data.selectedCity)}<p>Нет анкет в этом городе.</p>`;
+      return;
+    }
+    const seen = data.likes[data.currentUser] || [];
+    const unseen = peopleInCity.filter(p => !seen.includes(p.id));
+    const currentPerson = unseen.length > 0 ? unseen[0] : peopleInCity[0];
+    container.innerHTML = `
+      <h3 style="color:var(--green); text-align:center;">Найди команду</h3>
+      ${citySelectorHTML(data.selectedCity)}
+      <div class="match-card">
+        <div class="match-photo">${currentPerson.photo || '👤'}</div>
+        <h2>${currentPerson.name}</h2>
+        <p>${currentPerson.work}</p>
+        <div class="tags">
+          ${currentPerson.skills.map(s => `<span class="tag tag-green">${s}</span>`).join('')}
+          ${currentPerson.interests.map(i => `<span class="tag tag-orange">${i}</span>`).join('')}
+        </div>
+        <div class="match-actions">
+          <div class="action-btn btn-dislike" onclick="swipePerson('${currentPerson.id}','left')">✕</div>
+          <div class="action-btn btn-like" onclick="swipePerson('${currentPerson.id}','right')">♥</div>
+        </div>
+      </div>
+    `;
+  }
+
+  window.swipePerson = function(personId, direction) {
+    const userId = data.currentUser;
+    if (!data.likes[userId]) data.likes[userId] = [];
+    data.likes[userId].push(personId);
+    if (direction === 'right') {
+      const otherLikes = data.likes[personId] || [];
+      if (otherLikes.includes(userId)) {
+        alert('Это Метч! Вы добавлены в чат.');
+        const chatExists = data.chats.find(c => c.type === 'personal' &&
+          c.participants.includes(userId) && c.participants.includes(personId));
+        if (!chatExists) {
+          data.chats.push({
+            id: 'chat_' + Date.now(),
+            type: 'personal',
+            participants: [userId, personId],
+            messages: []
+          });
+        }
+      } else {
+        alert('Вы проявили интерес. Ждите взаимности.');
+      }
+    }
+    saveData();
+    navigate('match-people');
+  };
+
+  function renderMatchEvents(container) {
+    const eventsInCity = data.events.filter(e => e.status === 'active' && e.city === data.selectedCity);
+    if (eventsInCity.length === 0) {
+      container.innerHTML = `<h3 style="color:var(--green);">Куда пойти?</h3>${citySelectorHTML(data.selectedCity)}<p>Нет мероприятий в этом городе.</p>`;
+      return;
+    }
+    const currentEvent = eventsInCity[Math.floor(Math.random() * eventsInCity.length)];
+    container.innerHTML = `
+      <h3 style="color:var(--green); text-align:center;">Куда пойти?</h3>
+      ${citySelectorHTML(data.selectedCity)}
+      <div class="match-card">
+        <div class="match-photo" style="background:linear-gradient(135deg, #FF9800, #FF5722);">🎪</div>
+        <h2>${currentEvent.title}</h2>
+        <p>${currentEvent.date} · ${currentEvent.time}</p>
+        <p>📍 ${currentEvent.place}</p>
+        <p>${currentEvent.desc}</p>
+        <div class="match-actions">
+          <div class="action-btn btn-dislike" onclick="swipeEvent('${currentEvent.id}','left')">✕</div>
+          <div class="action-btn btn-like" onclick="swipeEvent('${currentEvent.id}','right')">♥</div>
+        </div>
+      </div>
+    `;
+  }
+
+  window.swipeEvent = function(eventId, direction) {
+    const userId = data.currentUser;
+    if (direction === 'right') {
+      if (!data.eventRegs[userId]) data.eventRegs[userId] = [];
+      if (!data.eventRegs[userId].includes(eventId)) {
+        data.eventRegs[userId].push(eventId);
+        const event = data.events.find(e => e.id === eventId);
+        let chat = data.chats.find(c => c.type === 'group' && c.eventId === eventId);
+        if (!chat) {
+          chat = {
+            id: 'group_' + eventId,
+            type: 'group',
+            eventId: eventId,
+            eventTitle: event.title,
+            participants: [userId],
+            messages: []
+          };
+          data.chats.push(chat);
+        } else if (!chat.participants.includes(userId)) {
+          chat.participants.push(userId);
+        }
+        alert('Вы записаны на мероприятие и добавлены в чат участников!');
+      }
+    }
+    saveData();
+    navigate('match-events');
+  };
+
+  function renderCalendar(container) {
+    const userId = data.currentUser;
+    const userEvents = (data.eventRegs[userId] || []).map(eid => data.events.find(e => e.id === eid)?.date).filter(Boolean);
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    let html = `<h3 style="color:var(--green);">${now.toLocaleString('ru', {month:'long'})} ${year}</h3>`;
+    html += '<div class="calendar-grid">';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isEvent = userEvents.includes(dateStr);
+      html += `<div class="cal-day ${isEvent ? 'event' : ''}">${d}</div>`;
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  function renderChats(container) {
+    const userId = data.currentUser;
+    const userChats = data.chats.filter(c => c.participants.includes(userId));
+    container.innerHTML = `
+      <h3 style="color:var(--green);">Мои чаты</h3>
+      ${userChats.map(c => {
+        if (c.type === 'personal') {
+          const other = c.participants.find(p => p !== userId);
+          const otherUser = data.users.find(u => u.email === other) || { name: other };
+          return `<div class="card" onclick="alert('Открыт чат с ${otherUser.name}')">👤 ${otherUser.name}</div>`;
+        } else {
+          return `<div class="card" onclick="alert('Групповой чат: ${c.eventTitle}')">👥 ${c.eventTitle}</div>`;
+        }
+      }).join('') || '<p>У вас пока нет чатов.</p>'}
+    `;
+  }
+
+  function renderCreateEvent(container) {
+    container.innerHTML = `
+      <h3 style="color:var(--green);">Новое мероприятие</h3>
+      <input id="evTitle" placeholder="Название">
+      <textarea id="evDesc" placeholder="Описание"></textarea>
+      <input id="evDate" type="date">
+      <input id="evTime" type="time">
+      <select id="evCity">
+        <option value="">Выберите город</option>
+        ${CITIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+      </select>
+      <input id="evPlace" placeholder="Адрес">
+      <button onclick="createEvent()">Отправить на модерацию</button>
+    `;
+  }
+
+  window.createEvent = function() {
+    const title = document.getElementById('evTitle').value.trim();
+    const desc = document.getElementById('evDesc').value.trim();
+    const city = document.getElementById('evCity').value;
+    if (!title || !city) { alert('Заполните название и выберите город'); return; }
+    data.events.push({
+      id: 'ev_' + Date.now(),
+      title, desc,
+      date: document.getElementById('evDate').value,
+      time: document.getElementById('evTime').value,
+      city,
+      place: document.getElementById('evPlace').value.trim(),
+      status: 'pending',
+      author: data.currentUser
+    });
+    saveData();
+    alert('Мероприятие отправлено на модерацию!');
+    navigate('main');
+  };
+
+  function renderProfile(container) {
+    const user = getCurrentUser();
+    if (!user) { navigate('login'); return; }
+    container.innerHTML = `
+      <h3 style="color:var(--green);">Профиль</h3>
+      <p>Имя: ${user.name}</p>
+      <label>Город (ваш город проживания):</label>
+      <select id="profCity">
+        ${CITIES.map(c => `<option value="${c}" ${user.city===c?'selected':''}>${c}</option>`).join('')}
+      </select>
+      <label>Область:</label>
+      <input id="profRegion" value="${user.region || ''}">
+      <button onclick="saveProfile()">Сохранить</button>
+      <p style="font-size:0.8rem; color:#666; margin-top:12px;">
+        Ваш город профиля используется по умолчанию при входе. Для просмотра других городов используйте фильтр на главной.
+      </p>
+    `;
+  }
+
+  window.saveProfile = function() {
+    const user = getCurrentUser();
+    user.city = document.getElementById('profCity').value;
+    user.region = document.getElementById('profRegion').value.trim();
+    const idx = data.users.findIndex(u => u.email === user.email);
+    if (idx !== -1) data.users[idx] = user;
+    saveData();
+    alert('Профиль обновлён!');
+    navigate('main');
+  };
+
+  function renderModeration(container) {
+    const pending = data.events.filter(e => e.status === 'pending');
+    container.innerHTML = `
+      <h3 style="color:var(--green);">Модерация</h3>
+      ${pending.map(e => `
+        <div class="card">
+          <strong>${e.title}</strong> (${e.city})<br>
+          <small>${e.desc}</small>
+          <div style="margin-top:8px;">
+            <button class="green" onclick="moderate('${e.id}','approve')">Одобрить</button>
+            <button onclick="moderate('${e.id}','reject')">Отклонить</button>
+          </div>
+        </div>
+      `).join('') || '<p>Нет мероприятий на модерации.</p>'}
+    `;
+  }
+
+  window.moderate = function(eventId, action) {
+    const event = data.events.find(e => e.id === eventId);
+    if (event) {
+      event.status = action === 'approve' ? 'active' : 'rejected';
+      saveData();
+      alert(`Мероприятие ${action === 'approve' ? 'одобрено' : 'отклонено'}`);
+      navigate('moderation');
+    }
+  };
+
+  // Инициализация
+  initDemoData();
+  if (data.currentUser) {
+    // При обновлении страницы город из selectedCity, если он сохранён
+    navigate('main');
+  } else {
+    navigate('login');
+  }
+</script>
+
+</body></html>
